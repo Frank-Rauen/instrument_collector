@@ -2,6 +2,12 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 import uuid
 import boto3
 
@@ -12,6 +18,7 @@ S3_BASE_URL = 'https://s3-us-west-1.amazonaws.com/'
 BUCKET = 'catcollector-fr'
 
 # Create your views here.
+@login_required
 def add_photo(request, instrument_id):
     photo_file = request.FILES.get('photo-file', None)
     if photo_file:
@@ -29,11 +36,12 @@ def add_photo(request, instrument_id):
             print('An error occurred uploading file to S3')
     return redirect('detail', instrument_id=instrument_id)
 
-
+@login_required
 def assoc_product(request, instrument_id, product_id):
   Instrument.objects.get(id=instrument_id).products.add(product_id)
   return redirect('detail', instrument_id=instrument_id)
 
+@login_required
 def dissoc_product(request, instrument_id, product_id):
     Instrument.objects.get(id=instrument_id).products.remove(product_id)
     return redirect('detail', instrument_id=instrument_id)
@@ -44,16 +52,19 @@ def home(request):
 def about(request):
     return render(request, 'about.html')
 
+@login_required
 def instruments_index(request):
-    instruments = Instrument.objects.all()
+    instruments = Instrument.objects.filter(user=request.user)
     return render(request, 'instruments/index.html', { 'instruments' : instruments })
 
+@login_required
 def instruments_detail(request, instrument_id):
     instrument = Instrument.objects.get(id=instrument_id)
     products_instrument_doesnt_have = Product.objects.exclude(id__in = instrument.products.all().values_list('id'))
     practice_form = PracticeForm()
     return render(request, 'instruments/detail.html', { 'instrument': instrument, 'practice_form' : practice_form, 'products' : products_instrument_doesnt_have })
 
+@login_required
 def add_practice(request, instrument_id):
     form = PracticeForm(request.POST)
     if form.is_valid():
@@ -62,35 +73,53 @@ def add_practice(request, instrument_id):
         new_practice.save()
     return redirect('detail', instrument_id=instrument_id)
 
-class InstrumentCreate(CreateView):
+def signup(request):
+    error_message = ''
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('index')
+        else:
+            error_message = 'Invalid Sign Up. Try Again'
+    form = UserCreationForm()
+    context = {'form': form, 'error_message': error_message}
+    return render(request, 'registration/signup.html', context)
+
+class InstrumentCreate(LoginRequiredMixin, CreateView):
     model = Instrument
     fields = ['make', 'model', 'year', 'description']
     success_url = '/instruments/'
 
-class InstrumentUpdate(UpdateView):
+    def form_valid(self, form):
+        form.instance.user = self.request.user 
+        return super().form_valid(form)
+
+class InstrumentUpdate(LoginRequiredMixin, UpdateView):
     model = Instrument
     fields = ['model', 'year', 'description']
 
-class InstrumentDelete(DeleteView):
+class InstrumentDelete(LoginRequiredMixin, DeleteView):
   model = Instrument
   success_url = '/instruments/'
 
-class ProductList(ListView):
+class ProductList(LoginRequiredMixin, ListView):
     model = Product
 
-class ProductDetail(DetailView):
+class ProductDetail(LoginRequiredMixin, DetailView):
     model = Product
 
-class ProductCreate(CreateView):
-    model = Product
-    fields = ['name']
-    success_url = '/products/'
-
-class ProductUpdate(UpdateView):
+class ProductCreate(LoginRequiredMixin, CreateView):
     model = Product
     fields = ['name']
     success_url = '/products/'
 
-class ProductDelete(DeleteView):
+class ProductUpdate(LoginRequiredMixin, UpdateView):
+    model = Product
+    fields = ['name']
+    success_url = '/products/'
+
+class ProductDelete(LoginRequiredMixin, DeleteView):
     model = Product
     success_url = '/products/'

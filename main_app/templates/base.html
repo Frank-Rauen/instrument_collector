@@ -20,10 +20,16 @@
         </ul>
         <ul class="right">
           <li><a href="{% url 'about' %}">About</a></li>
+          {% if user.is_authenticated %}
           <li><a href="{% url 'instruments_create' %}">Add an Instrument</a></li>
           <li><a href="{% url 'index' %}">View All Instruments</a></li>
           <li><a href="{% url 'products_create' %}">Add a Product</a></li>
           <li><a href="{% url 'products_index' %}">View All Products</a></li>
+          <li><a href="{% url 'logout' %}">Logout</a></li>
+          {% else %}
+          <li><a href="{% url 'signup' %}">Sign Up</a></li>
+          <li><a href="{% url 'login' %}">Login</a></li>
+          {% endif %}
         </ul>
       </div>
     </nav>
