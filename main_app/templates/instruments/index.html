@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h1>Instrument List</h1>
+
+{% for instrument in instruments %}
+  <div class="card">
+    <div class="card-content">
+      <span class="card-title">{{ instrument.make }}</span>
+      <p>Model: {{ instrument.model }}</p>
+      <p>Year: {{ instrument.year }}</p>
+        <p>Description: {{ instrument.description }}</p>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}
