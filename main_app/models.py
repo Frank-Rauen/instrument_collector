@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 # Create your models here.
 class Instrument(models.Model):  
@@ -9,3 +10,6 @@ class Instrument(models.Model):
 
     def __str__(self):
         return self.make
+    
+    def get_absolute_url(self):
+        return reverse('detail', kwargs={'instrument_id': self.id})

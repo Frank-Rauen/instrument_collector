@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
 from .models import Instrument
 
@@ -17,3 +18,16 @@ def instruments_index(request):
 def instruments_detail(request, instrument_id):
     instrument = Instrument.objects.get(id=instrument_id)
     return render(request, 'instruments/detail.html', { 'instrument': instrument })
+
+class InstrumentCreate(CreateView):
+    model = Instrument
+    fields = '__all__'
+    success_url = '/instruments/'
+
+class InstrumentUpdate(UpdateView):
+    model = Instrument
+    fields = ['model', 'year', 'description']
+
+class InstrumentDelete(DeleteView):
+  model = Instrument
+  success_url = '/instruments/'
