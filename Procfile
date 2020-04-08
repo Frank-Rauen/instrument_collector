@@ -1,0 +1,1 @@
+web: gunicorn instrument_collector.wsgi
